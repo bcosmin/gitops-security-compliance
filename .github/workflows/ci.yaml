@@ -1,0 +1,34 @@
+name: Security & Compliance CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  trivy-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in repo mode (IaC & Manifests)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'config'
+          hide-progress: false
+          format: 'table'
+          exit-code: '1' # Fails the build if misconfigurations are found
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy scanner for container image (Demo App)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'nginx:latest'
+          format: 'table'
+          exit-code: '0' # Set to '1' once you want to strictly block vulnerable base images in PRs
+          ignore-unfixed: true
+          severity: 'CRITICAL'
