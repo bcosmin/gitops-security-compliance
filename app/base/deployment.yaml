@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,11 +15,21 @@ spec:
       labels:
         app: web-app
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
       containers:
         - name: nginx
-          image: nginx:latest
+          image: nginx:1.25-alpine # Using a specific stable tag instead of 'latest'
           ports:
             - containerPort: 80
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
               memory: "64Mi"
@@ -28,3 +37,13 @@ spec:
             limits:
               memory: "128Mi"
               cpu: "500m"
+          volumeMounts:
+            - name: cache-volume
+              mountPath: /var/cache/nginx
+            - name: run-volume
+              mountPath: /var/run
+      volumes:
+        - name: cache-volume
+          emptyDir: {}
+        - name: run-volume
+          emptyDir: {}
